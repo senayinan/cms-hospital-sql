@@ -76,6 +76,28 @@ ORDER BY missing_hospitals DESC;
 
 
 
+-- Patient survey (hcahps_hospital)
+-- ------------------------------------------------------------
+
+-- Q5: List every survey item (Measure ID and question), each one only once.
+-- DISTINCT applies to the whole row (both columns together): 68 survey items
+SELECT DISTINCT `HCAHPS Measure ID`, `HCAHPS Question`
+FROM hcahps_hospital;
+
+
+
+-- Q6: For Missouri hospitals, show name, hospital type, and the summary star rating from the patient survey.
+-- INNER JOIN: only hospitals that have survey data; H_STAR_RATING picks the summary row, its value is in Patient Survey Star Rating
+SELECT h.`Facility Name`, h.`Hospital Type`, s.`Patient Survey Star Rating`
+FROM hospital_general_information h
+INNER JOIN hcahps_hospital s
+ON h.`Facility ID` = s.`Facility ID`
+WHERE h.`State` = 'MO'
+AND s.`HCAHPS Measure ID` = 'H_STAR_RATING';
+
+
+
+
 
 
 

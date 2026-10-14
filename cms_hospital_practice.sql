@@ -97,6 +97,16 @@ AND s.`HCAHPS Measure ID` = 'H_STAR_RATING';
 
 
 
+-- Q7: For Missouri hospitals, count how many got each summary star rating.
+-- "How many per rating" -> COUNT + GROUP BY the rating; no JOIN, all columns in hcahps_hospital
+SELECT s.`Patient Survey Star Rating`, COUNT(*) AS hospitals
+FROM hcahps_hospital s
+WHERE s.`State` = 'MO'
+AND s.`HCAHPS Measure ID` = 'H_STAR_RATING'
+GROUP BY s.`Patient Survey Star Rating`
+ORDER BY s.`Patient Survey Star Rating`;
+
+
 
 
 

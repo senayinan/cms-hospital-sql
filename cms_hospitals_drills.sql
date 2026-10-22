@@ -143,5 +143,53 @@ GROUP BY h.`Hospital Type`;
 
 
 
+-- Checkpoint: mixed questions
+
+
+-- C1: Names of Missouri hospitals with a 5-star rating for cleanliness.
+SELECT s.`Facility Name`
+FROM hcahps_hospital AS s
+WHERE s.`State` = 'MO'
+AND s.`HCAHPS Measure ID` = 'H_CLEAN_STAR_RATING'
+AND s.`Patient Survey Star Rating` = '5';
+
+
+-- C2: How many Critical Access Hospitals are in each state? Most first.
+SELECT h.`State`, COUNT(*) AS hospitals
+FROM hospital_general_information AS h
+WHERE h.`Hospital Type` = 'Critical Access Hospitals'
+GROUP BY h.`State`
+ORDER BY hospitals DESC;
+
+
+-- C3: For Missouri, show each hospital's name, ownership, and heart failure readmission score.
+SELECT h.`Facility Name`, h.`Hospital Ownership`, u.`Score`
+FROM hospital_general_information AS h
+INNER JOIN unplanned_hospital_visits_hospital AS u
+ON h.`Facility ID` = u.`Facility ID`
+WHERE h.`State` = 'MO'
+AND u.`Measure ID` = 'READM_30_HF';
+
+
+-- C4: How many children's hospitals nationwide have no data in the unplanned visits table?
+SELECT COUNT(*)
+FROM hospital_general_information AS h
+LEFT JOIN unplanned_hospital_visits_hospital AS u
+ON h.`Facility ID` = u.`Facility ID`
+WHERE h.`Hospital Type` = 'Childrens'
+AND u.`Facility ID` IS NULL;
+
+
+-- C5: For Missouri, how many hospitals got each summary star rating? Ratings in order.
+SELECT s.`Patient Survey Star Rating` AS rating, COUNT(*) AS hospitals
+FROM hcahps_hospital AS s
+WHERE s.`State` = 'MO'
+AND s.`HCAHPS Measure ID` = 'H_STAR_RATING'
+GROUP BY rating
+ORDER BY rating;
+
+
+
+
 
 

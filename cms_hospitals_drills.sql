@@ -189,6 +189,44 @@ GROUP BY rating
 ORDER BY rating;
 
 
+-- Subquery Drills
+
+-- Sub-drill 1:Which Missouri hospitals have a cleanliness linear score above the Missouri average?
+SELECT s.`Facility Name`, s.`HCAHPS Linear Mean Value` AS clean_score
+FROM hcahps_hospital AS s
+WHERE s.`State` = 'MO'
+AND `HCAHPS Measure ID` = 'H_CLEAN_LINEAR_SCORE'
+AND s.`HCAHPS Linear Mean Value` > (
+    SELECT AVG(`HCAHPS Linear Mean Value`) AS avg_clean_score
+    FROM hcahps_hospital AS s2
+    WHERE s2.`State` = 'MO'
+    AND s2.`HCAHPS Measure ID` = 'H_CLEAN_LINEAR_SCORE'
+    AND s2.`HCAHPS Linear Mean Value` <> 'Not Available'
+)
+ORDER BY s.`HCAHPS Linear Mean Value` DESC;
+
+
+-- Sub-drill 2: Name and Hospital Type of Missouri hospitals with a 5-star summary rating.
+SELECT h.`Facility Name`, h.`Hospital Type`
+FROM hospital_general_information AS h
+WHERE h.`Facility ID` IN (
+    SELECT s.`Facility ID`
+    FROM hcahps_hospital AS s
+    WHERE s.`State` = 'MO'
+    AND s.`HCAHPS Measure ID` = 'H_STAR_RATING'
+    AND s.`Patient Survey Star Rating` = '5'
+);
+
+-- Sub-drill 3:Show the name and Hospital Type of Missouri hospitals that have no data in the patient survey table.
+SELECT h.`Facility Name`, h.`Hospital Type`
+FROM hospital_general_information AS h
+WHERE h.`State` = 'MO'
+AND h.`Facility ID` NOT IN (
+SELECT s.`Facility ID` 
+FROM hcahps_hospital AS s
+);
+
+
 
 
 

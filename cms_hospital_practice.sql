@@ -106,6 +106,25 @@ AND s.`HCAHPS Measure ID` = 'H_STAR_RATING'
 GROUP BY s.`Patient Survey Star Rating`
 ORDER BY s.`Patient Survey Star Rating`;
 
+-- Subqueries
+-- ------------------------------------------------------------
+
+-- Q8: Missouri hospitals with a heart failure readmission score (READM_30_HF) above the Missouri average.
+-- Subquery in parentheses runs first and returns one number (the MO average, about 21.62);
+-- the outer query keeps hospitals with a higher score
+SELECT u.`Facility Name`, u.`Score`
+FROM unplanned_hospital_visits_hospital AS u
+WHERE u.`State` = 'MO'
+AND u.`Measure ID` = 'READM_30_HF'
+AND u.`Score` > (
+    SELECT AVG(u2.`Score`)
+    FROM unplanned_hospital_visits_hospital AS u2
+    WHERE u2.`State` = 'MO'
+    AND u2.`Measure ID` = 'READM_30_HF'
+    AND u2.`Score` <> 'Not Available'
+)
+ORDER BY u.`Score` DESC;
+
 
 
 

@@ -227,7 +227,47 @@ FROM hcahps_hospital AS s
 );
 
 
+-- Sub-drill 4: Missouri hospitals with a pneumonia readmission score (READM_30_PN) lower than the national average.
+SELECT u.`Facility Name` AS hospitals , u.`Score`
+FROM unplanned_hospital_visits_hospital AS u
+WHERE u.`State` = 'MO'
+AND u.`Measure ID` = 'READM_30_PN'
+AND u.`Score` <> 'Not Available'
+AND u.`Score` < (
+SELECT AVG(u2.`Score`) AS national_avg
+FROM unplanned_hospital_visits_hospital AS u2
+WHERE u2.`Measure ID` = 'READM_30_PN'
+AND u2.`Score` <> 'Not Available'
+)
+ORDER BY u.`Score`;
 
 
+-- Sub-drill 5: Name and Hospital Ownership of Missouri hospitals with a 1- or 2-star summary rating.
+SELECT h.`Facility Name`, h.`Hospital Ownership`
+FROM hospital_general_information AS h
+WHERE h.`State` = 'MO' 
+AND h.`Facility ID`
+IN (
+SELECT s.`Facility ID`
+FROM hcahps_hospital AS s
+WHERE s.`State` = 'MO'
+AND s.`HCAHPS Measure ID` = 'H_STAR_RATING'
+AND s.`Patient Survey Star Rating` IN ('1', '2')
+);
+
+
+-- Sub-drill 6: Missouri hospitals with a nurse communication linear score below the national average.
+SELECT s.`Facility Name`, s.`HCAHPS Linear Mean Value` AS linear_score
+FROM hcahps_hospital AS s
+WHERE s.`State` = 'MO'
+AND s.`HCAHPS Measure ID` = 'H_COMP_1_LINEAR_SCORE'
+AND s.`HCAHPS Linear Mean Value` <> 'Not Available'
+AND s.`HCAHPS Linear Mean Value` < (
+SELECT AVG(s2.`HCAHPS Linear Mean Value`) AS national_avg
+FROM hcahps_hospital AS s2
+WHERE s2.`HCAHPS Measure ID` = 'H_COMP_1_LINEAR_SCORE'
+AND s2.`HCAHPS Linear Mean Value` <> 'Not Available'
+)
+ORDER BY `HCAHPS Linear Mean Value` DESC;
 
 

@@ -341,6 +341,29 @@ ON h.`Facility ID` = m.`Facility ID`
 WHERE m.score < (SELECT national_avg FROM national)
 ORDER BY m.score;
 
+
+-- CTE drill 5: Show the name, Hospital Ownership, and cleanliness linear score of Missouri hospitals whose score is above the national average. Highest first.
+WITH national AS (
+ SELECT AVG(s.`HCAHPS Linear Mean Value`) AS national_avg
+ FROM hcahps_hospital AS s
+ WHERE s.`HCAHPS Measure ID` = 'H_CLEAN_LINEAR_SCORE'
+ AND s.`HCAHPS Linear Mean Value` <> 'Not Available'
+ ),
+ mo_clean AS (
+ SELECT s.`Facility ID`, s.`HCAHPS Linear Mean Value` AS score
+ FROM hcahps_hospital AS s
+ WHERE s.`HCAHPS Measure ID` = 'H_CLEAN_LINEAR_SCORE'
+ AND s.`HCAHPS Linear Mean Value` <> 'Not Available'
+ AND s.`State` = 'MO'
+ )
+ SELECT h.`Facility Name`, h.`Hospital Ownership`, m.score
+ FROM hospital_general_information AS h
+ INNER JOIN mo_clean AS m
+ ON h.`Facility ID` = m.`Facility ID`
+ WHERE m.score > (SELECT national_avg FROM national)
+ ORDER BY m.score DESC;
+ 
+
  
 
 

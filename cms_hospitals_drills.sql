@@ -342,7 +342,7 @@ WHERE m.score < (SELECT national_avg FROM national)
 ORDER BY m.score;
 
 
--- CTE drill 5: Show the name, Hospital Ownership, and cleanliness linear score of Missouri hospitals whose score is above the national average. Highest first.
+-- CTE drill 5: Missouri hospitals with a cleanliness linear score above the national average, with ownership,highest first.
 WITH national AS (
  SELECT AVG(s.`HCAHPS Linear Mean Value`) AS national_avg
  FROM hcahps_hospital AS s
@@ -362,6 +362,29 @@ WITH national AS (
  ON h.`Facility ID` = m.`Facility ID`
  WHERE m.score > (SELECT national_avg FROM national)
  ORDER BY m.score DESC;
+ 
+ 
+ -- CTE drill 6: Missouri hospitals with COPD readmission (READM_30_COPD) below the national average, with hospital type
+-- Excludes 'Not Available' scores, which MySQL would otherwise treat as 0
+WITH national AS (
+SELECT AVG(u.`Score`) AS national_avg
+FROM unplanned_hospital_visits_hospital AS u
+WHERE u.`Measure ID` = 'READM_30_COPD'
+AND u.`Score` <> 'Not Available'
+),
+mo_copd AS (
+SELECT u.`Facility ID`, u.`Score` AS score
+FROM unplanned_hospital_visits_hospital AS u
+WHERE u.`Measure ID` = 'READM_30_COPD'
+AND u.`Score` <> 'Not Available'
+AND u.`State` = 'MO'
+)
+SELECT h.`Facility Name`, h.`Hospital Type`, m.score
+FROM hospital_general_information AS h
+INNER JOIN mo_copd AS m
+ON h.`Facility ID` = m.`Facility ID`
+WHERE m.score < (SELECT national_avg FROM national)
+ORDER BY m.score ASC;
  
 
  

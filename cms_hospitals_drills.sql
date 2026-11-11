@@ -1,9 +1,10 @@
 -- CMS Hospitals SQL Drills
+-- Short practice queries on the same CMS tables as cms_hospitals_practice.sql
 -- Data: CMS Provider Data Catalog (data.cms.gov/provider-data/topics/hospitals)
 
 USE cms_hospitals;
 
-
+-- Drills
 -- Drill 1: How many hospitals in each state have a 5-star summary rating?
 SELECT s.`State`, COUNT(*) AS hospitals
 FROM hcahps_hospital AS s
@@ -257,6 +258,7 @@ AND s.`Patient Survey Star Rating` IN ('1', '2')
 
 
 -- Sub-drill 6: Missouri hospitals with a nurse communication linear score below the national average.
+-- Excludes 'Not Available' scores, which MySQL would otherwise treat as 0
 SELECT s.`Facility Name`, s.`HCAHPS Linear Mean Value` AS linear_score
 FROM hcahps_hospital AS s
 WHERE s.`State` = 'MO'
@@ -269,5 +271,87 @@ WHERE s2.`HCAHPS Measure ID` = 'H_COMP_1_LINEAR_SCORE'
 AND s2.`HCAHPS Linear Mean Value` <> 'Not Available'
 )
 ORDER BY `HCAHPS Linear Mean Value` DESC;
+
+-- CTE Drills 
+-- CTE drill 1: Sub-drill 6 rewritten as a CTE. 
+-- Missouri hospitals with a nurse communication linear score below the national average
+WITH national AS (
+SELECT AVG (s2.`HCAHPS Linear Mean Value`) AS national_avg
+FROM hcahps_hospital AS s2
+WHERE s2.`HCAHPS Measure ID` = 'H_COMP_1_LINEAR_SCORE'
+AND s2.`HCAHPS Linear Mean Value` <> 'Not Available'
+)
+SELECT s.`Facility Name`, s.`HCAHPS Linear Mean Value` AS linear_score
+FROM hcahps_hospital AS s
+WHERE s.`State` = 'MO'
+AND s.`HCAHPS Measure ID` = 'H_COMP_1_LINEAR_SCORE'
+AND s.`HCAHPS Linear Mean Value` <> 'Not Available'
+AND s.`HCAHPS Linear Mean Value` < (SELECT national_avg FROM national);
+
+
+-- CTE drill 2: Sub-drill 5 rewritten as a CTE (name and ownership of MO hospitals with 1-2 star summary rating).
+-- The CTE holds a LIST of Facility IDs; use it like a table: (SELECT `Facility ID` FROM low_rated)
+WITH low_rated AS (
+SELECT s.`Facility ID`
+FROM hcahps_hospital AS s
+WHERE s.`State` = 'MO'
+AND s.`HCAHPS Measure ID` = 'H_STAR_RATING'
+AND s.`Patient Survey Star Rating` IN ('1', '2')
+)
+SELECT h.`Facility Name`, h.`Hospital Ownership`
+FROM hospital_general_information AS h
+WHERE h.`Facility ID` IN (SELECT `Facility ID` FROM low_rated);
+
+
+
+-- CTE drill 3: Missouri hospitals ranked by summary star rating, with hospital type
+WITH mo_ratings AS (
+    SELECT s.`Facility ID`, s.`Patient Survey Star Rating` AS rating
+    FROM hcahps_hospital AS s
+    WHERE s.`State` = 'MO'
+    AND s.`HCAHPS Measure ID` = 'H_STAR_RATING'
+    AND s.`Patient Survey Star Rating` <> 'Not Available'
+)
+SELECT h.`Facility Name`, h.`Hospital Type`, r.rating
+FROM hospital_general_information AS h
+INNER JOIN mo_ratings AS r
+ON h.`Facility ID` = r.`Facility ID`
+ORDER BY r.rating DESC;
+
+
+-- CTE drill 4: Missouri hospitals with pneumonia readmission (READM_30_PN) below the national average, with hospital type
+-- Excludes 'Not Available' scores, which MySQL would otherwise treat as 0
+WITH national AS (
+    SELECT AVG(u.`Score`) AS national_avg
+    FROM unplanned_hospital_visits_hospital AS u
+    WHERE u.`Measure ID` = 'READM_30_PN'
+    AND u.`Score` <> 'Not Available'
+),
+mo_pn AS (
+    SELECT u.`Facility ID`, u.`Score` AS score
+    FROM unplanned_hospital_visits_hospital AS u
+    WHERE u.`Measure ID` = 'READM_30_PN'
+    AND u.`Score` <> 'Not Available'
+    AND u.`State` = 'MO'
+)
+SELECT h.`Facility Name`, h.`Hospital Type`, m.score
+FROM hospital_general_information AS h
+INNER JOIN mo_pn AS m
+ON h.`Facility ID` = m.`Facility ID`
+WHERE m.score < (SELECT national_avg FROM national)
+ORDER BY m.score;
+
+ 
+
+
+
+
+
+
+
+
+
+
+
 
 
